@@ -1,0 +1,8 @@
+name: thunder-alley-league
+channels:
+  - defaults
+dependencies:
+  - python
+  - pandas
+  - numpy
+  - ipykernel

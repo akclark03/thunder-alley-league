@@ -1,0 +1,24 @@
+{
+  "tracks": {
+    "yunta_brothers_velodrome": {
+      "name": "Yunta Brothers Velodrome",
+      "location": null,
+      "laps": null
+    },
+    "pullingers_pyramid": {
+      "name": "Pullinger's Pyramid",
+      "location": null,
+      "laps": null
+    },
+    "saint_adriana_speedway": {
+      "name": "Saint Adriana Speedway",
+      "location": null,
+      "laps": null
+    },
+    "verghns_grove": {
+      "name": "Verghn's Grove",
+      "location": null,
+      "laps": null
+    }
+  }
+}
