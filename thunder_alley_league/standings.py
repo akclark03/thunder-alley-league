@@ -109,15 +109,21 @@ def playoff_standings(all_race_data):
 
     playoff_agg.insert(0, "Pos", range(1, len(playoff_agg) + 1))
 
-    if len(playoff_agg) < 12:
+    if len(playoff_agg) < 13:  # Changed from 12 to 13
         playoff_agg["+/-"] = ""
     else:
         pts_12 = playoff_agg.iloc[11]["playoffPoints"]
+        pts_13 = playoff_agg.iloc[12]["playoffPoints"]
 
         def _pm(row):
             if pd.isna(row["playoffPoints"]):
                 return ""
-            delta = row["playoffPoints"] - pts_12
+            if row["Pos"] <= 12:
+                # Above cutline: show gap to 13th place
+                delta = row["playoffPoints"] - pts_13
+            else:
+                # Below cutline: show gap to 12th place
+                delta = row["playoffPoints"] - pts_12
             return f"{int(delta):+d}"
 
         playoff_agg["+/-"] = playoff_agg.apply(_pm, axis=1)
