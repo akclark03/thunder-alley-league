@@ -20,8 +20,8 @@ def calc_qualifying_points(
 
 def _calculate_team_stats(
     results: list[dict], grid_idx: pd.DataFrame
-) -> tuple[dict[str, list[int]], str | None]:
-    """Calculate team finishes and identify team with most turns led."""
+) -> dict[str, list[int]]:
+    """Calculate team finishes."""
     team_finishes: dict[str, list[int]] = {}
     team_turns_led: dict[str, int] = {}
 
@@ -44,12 +44,7 @@ def _calculate_team_stats(
     for team, finishes in team_finishes.items():
         finishes.sort()
 
-    # Find team with most turns led
-    team_with_most_led = (
-        max(team_turns_led, key=lambda t: team_turns_led[t]) if team_turns_led else None
-    )
-
-    return team_finishes, team_with_most_led
+    return team_finishes
 
 
 def _build_dnq_result(
@@ -119,7 +114,7 @@ def build_race_results(
     po_def = points_structure.get("playoffPoints", {}) or {}
     qual_def = points_structure.get("qualifyingPoints", {}) or {}
 
-    team_finishes, team_with_most_led = _calculate_team_stats(results, grid_idx)
+    team_finishes = _calculate_team_stats(results, grid_idx)
 
     rows: list[dict] = []
     for result in results:
@@ -132,14 +127,7 @@ def build_race_results(
         else:
             rows.append(
                 _build_finisher_result(
-                    result,
-                    row,
-                    team,
-                    pts_def,
-                    po_def,
-                    points_structure,
-                    team_finishes,
-                    team_with_most_led,
+                    result, row, team, pts_def, po_def, points_structure, team_finishes
                 )
             )
 
