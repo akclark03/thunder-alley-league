@@ -1,143 +1,143 @@
 {
-  "racers": {
+  "drivers": {
     "1": {
       "carNumber": 1,
-      "name": "François Petitclerc",
+      "driver": "François Petitclerc",
       "team": "Pockets Racing"
     },
     "3": {
       "carNumber": 3,
-      "name": "David Landes",
+      "driver": "David Landes",
       "team": "Pockets Racing"
     },
     "4": {
       "carNumber": 4,
-      "name": "Preston Biggum",
+      "driver": "Preston Biggum",
       "team": "Quaker-Stubbs Motorsports"
     },
     "7": {
       "carNumber": 7,
-      "name": "Will Razorback",
+      "driver": "Will Razorback",
       "team": "Pockets Racing"
     },
     "8": {
       "carNumber": 8,
-      "name": "Francis K. Lalumière",
+      "driver": "Francis K. Lalumière",
       "team": "Howitzer Racing"
     },
     "9": {
       "carNumber": 9,
-      "name": "Jean-Luc Simard",
+      "driver": "Jean-Luc Simard",
       "team": "Quaker-Stubbs Motorsports"
     },
     "11": {
       "carNumber": 11,
-      "name": "Rob \"Bazooka\" Judy",
+      "driver": "Rob \"Bazooka\" Judy",
       "team": "Howitzer Racing"
     },
     "12": {
       "carNumber": 12,
-      "name": "Jimmy Biggum",
+      "driver": "Jimmy Biggum",
       "team": "Quaker-Stubbs Motorsports"
     },
     "15": {
       "carNumber": 15,
-      "name": "Aya Fraley",
+      "driver": "Aya Fraley",
       "team": "Quaker-Stubbs Motorsports"
     },
     "16": {
       "carNumber": 16,
-      "name": "Cameron Chien",
+      "driver": "Cameron Chien",
       "team": "Howitzer Racing"
     },
     "17": {
       "carNumber": 17,
-      "name": "Johnny Zornes",
+      "driver": "Johnny Zornes",
       "team": "Quaker-Stubbs Motorsports"
     },
     "18": {
       "carNumber": 18,
-      "name": "Nicholas Alexander",
+      "driver": "Nicholas Alexander",
       "team": "Pockets Racing"
     },
     "19": {
       "carNumber": 19,
-      "name": "Joe Valdez",
+      "driver": "Joe Valdez",
       "team": "Mythos Motorsports"
     },
     "22": {
       "carNumber": 22,
-      "name": "\"Tiny\" Pockets",
+      "driver": "\"Tiny\" Pockets",
       "team": "Pockets Racing"
     },
     "24": {
       "carNumber": 24,
-      "name": "V.C. Horger",
+      "driver": "V.C. Horger",
       "team": "Quaker-Stubbs Motorsports"
     },
     "25": {
       "carNumber": 25,
-      "name": "Adrian Cold",
+      "driver": "Adrian Cold",
       "team": "Red Fury Racing"
     },
     "28": {
       "carNumber": 28,
-      "name": "Jens Kappe",
+      "driver": "Jens Kappe",
       "team": "Mythos Motorsports"
     },
     "29": {
       "carNumber": 29,
-      "name": "Fabius Doria",
+      "driver": "Fabius Doria",
       "team": "Red Fury Racing"
     },
     "40": {
       "carNumber": 40,
-      "name": "\"Blinks\" Blinkinsop",
+      "driver": "\"Blinks\" Blinkinsop",
       "team": "Pockets Racing"
     },
     "41": {
       "carNumber": 41,
-      "name": "Robert Gutierrez",
+      "driver": "Robert Gutierrez",
       "team": "Red Fury Racing"
     },
     "42": {
       "carNumber": 42,
-      "name": "Jim Jozens",
+      "driver": "Jim Jozens",
       "team": "Red Fury Racing"
     },
     "43": {
       "carNumber": 43,
-      "name": "David McCarson",
+      "driver": "David McCarson",
       "team": "Howitzer Racing"
     },
     "44": {
       "carNumber": 44,
-      "name": "Lee Ambolt",
+      "driver": "Lee Ambolt",
       "team": "Howitzer Racing"
     },
     "54": {
       "carNumber": 54,
-      "name": "Debby \"Speedy\" Miller",
+      "driver": "Debby \"Speedy\" Miller",
       "team": "Howitzer Racing"
     },
     "69": {
       "carNumber": 69,
-      "name": "Frank Marrero",
+      "driver": "Frank Marrero",
       "team": "Red Fury Racing"
     },
     "71": {
       "carNumber": 71,
-      "name": "\"Dasher\" Carsten",
+      "driver": "\"Dasher\" Carsten",
       "team": "Mythos Motorsports"
     },
     "77": {
       "carNumber": 77,
-      "name": "Dan Pattison",
+      "driver": "Dan Pattison",
       "team": "Red Fury Racing"
     },
     "88": {
       "carNumber": 88,
-      "name": "Aiden Thayler",
+      "driver": "Aiden Thayler",
       "team": "Mythos Motorsports"
     }
   }

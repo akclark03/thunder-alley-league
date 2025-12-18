@@ -5,7 +5,7 @@ import random
 import numpy as np
 import pandas as pd
 
-from .io_utils import load_racers
+from .io_utils import load_drivers
 
 
 def qualifying_sequence(all_race_data):
@@ -88,10 +88,10 @@ def starting_grid(teams, pole_position, qualifiers) -> pd.DataFrame:
     else:
         cars_per_team = 3
 
-    # If no qualifiers (first race), build grid from racers.json with random selection
+    # If no qualifiers (first race), build grid from drivers.json with random selection
     if qualifiers.empty:
 
-        racers = load_racers()
+        drivers = load_drivers()
         pole_teams = [
             team
             for team, _ in sorted(pole_position.items(), key=lambda kv: kv[1])
@@ -103,7 +103,7 @@ def starting_grid(teams, pole_position, qualifiers) -> pd.DataFrame:
         for team in pole_teams:
             team_cars = [
                 (int(car_num), info)
-                for car_num, info in racers.items()
+                for car_num, info in drivers.items()
                 if info["team"] == team
             ]
             # Randomly select appropriate number of cars from this team
