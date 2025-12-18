@@ -141,6 +141,10 @@ def team_race_results(race_df: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
     )
 
+    # get the team name that led the most turns (first occurrence on ties)
+    team_with_most_led = team_results.loc[team_results["turnsLed"].idxmax(), "team"]
+    team_results.loc[team_results["team"] == team_with_most_led, "totalPoints"] += 1
+
     # Calculate average finish for each team (only counting finishers)
     avg_finish = finishers.groupby("team")["finish"].mean().round(2)
     team_results["avgFinish"] = team_results["team"].map(avg_finish).fillna(0)

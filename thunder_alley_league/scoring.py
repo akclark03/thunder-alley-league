@@ -94,10 +94,6 @@ def _build_finisher_result(
     total_points = race_points + turns_led
     relative_finish = team_finishes[team].index(finish_pos) + 1
 
-    # Add bonus point if this driver's team led the most turns and finished 1st on team
-    if team == team_with_most_led and relative_finish == 1:
-        total_points += 1
-
     return {
         "finish": finish_pos,
         "carNumber": int(result["carNumber"]),
