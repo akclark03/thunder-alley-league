@@ -13,12 +13,12 @@ A Python-based race management system for tracking Thunder Alley board game leag
 
 ## Project Structure
 
-```
+```bash
 thunder-alley-league/
 ├── config/ # League configuration files
 │ ├── points_structure.json # Race and playoff points definitions
 │ ├── pole_position.json # Team pole position rankings
-│ ├── racers.json # Driver and team roster
+│ ├── drivers.json # Driver and team roster
 │ ├── team_owners.json # Team ownership mapping
 │ └── tracks.json # Track definitions
 ├── data/
@@ -72,7 +72,7 @@ python -m thunder_alley_league.main
 
 ### Main Menu Options
 
-**1. Start a race**
+#### 1. Start a race**
 
 - Select number of players (2-7)
 - Choose teams (3-4 cars per team based on player count)
@@ -81,13 +81,13 @@ python -m thunder_alley_league.main
 - Enter finishing positions and turns led
 - Automatically saves race results and updates season
 
-**2. Recalculate standings**
+#### 2. Recalculate standings**
 
 - Rebuilds season CSV from all race JSONs
 - Updates driver, owner, and playoff standings
 - Saves standings to CSV files
 
-**3. Exit**
+#### 3. Exit
 
 ## Scoring System
 

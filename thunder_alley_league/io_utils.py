@@ -36,10 +36,10 @@ def save_json(obj: Any, path: Path) -> None:
 # ---------- Config loaders ----------
 
 
-def load_racers() -> Dict[str, Dict[str, Any]]:
-    """Load racers config keyed by carNumber."""
-    data = load_json(CONFIG_DIR / "racers.json")
-    return data["racers"]
+def load_drivers() -> Dict[str, Dict[str, Any]]:
+    """Load drivers config keyed by carNumber."""
+    data = load_json(CONFIG_DIR / "drivers.json")
+    return data["drivers"]
 
 
 def load_team_owners() -> Dict[str, str | None]:
