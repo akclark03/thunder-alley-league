@@ -78,7 +78,6 @@ def _build_finisher_result(
     po_def: dict,
     points_structure: dict,
     team_finishes: dict[str, list[int]],
-    team_with_most_led: str | None,
 ) -> dict:
     """Build result dict for finishing car."""
     finish_pos = int(result["finish"])
