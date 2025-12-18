@@ -88,10 +88,11 @@ def starting_grid(teams, pole_position, qualifiers) -> pd.DataFrame:
     else:
         cars_per_team = 3
 
+    drivers = load_drivers()
+
     # If no qualifiers (first race), build grid from drivers.json with random selection
     if qualifiers.empty:
 
-        drivers = load_drivers()
         pole_teams = [
             team
             for team, _ in sorted(pole_position.items(), key=lambda kv: kv[1])
@@ -129,31 +130,68 @@ def starting_grid(teams, pole_position, qualifiers) -> pd.DataFrame:
 
         return pd.DataFrame(rows)
 
-    # Normal case: use qualifying results, limited by cars_per_team
+    # Normal case: use qualifying results, but fill gaps with random drivers
     pole_teams = [
         team
         for team, _ in sorted(pole_position.items(), key=lambda kv: kv[1])
         if team in teams
     ]
 
+    # Build team selections: use qualifiers first, then fill gaps randomly
+    team_selections = {}
+    for team in pole_teams:
+        # Get drivers from qualifiers for this team
+        team_qualifiers = qualifiers[qualifiers["team"] == team].sort_values(
+            "teamPosition"
+        )
+
+        # Get all available drivers for this team
+        team_cars = [
+            (int(car_num), info)
+            for car_num, info in drivers.items()
+            if info["team"] == team
+        ]
+
+        # Track which cars already qualified
+        qualified_cars = set(team_qualifiers["carNumber"].astype(int).tolist())
+
+        # Available cars for random selection (not already qualified)
+        available_cars = [
+            (car_num, info)
+            for car_num, info in team_cars
+            if car_num not in qualified_cars
+        ]
+
+        # Build selection list for this team
+        selections = []
+        for _, row in team_qualifiers.iterrows():
+            selections.append((int(row["carNumber"]), {"name": row["driver"]}))
+
+        # Fill remaining slots randomly if needed
+        slots_needed = cars_per_team - len(selections)
+        if slots_needed > 0 and available_cars:
+            random_picks = random.sample(
+                available_cars, min(slots_needed, len(available_cars))
+            )
+            selections.extend(random_picks)
+
+        team_selections[team] = selections
+
+    # Build grid: cycle through teams for each position
     rows = []
     pos = 1
-    for rank in range(1, cars_per_team + 1):
+    for rank in range(cars_per_team):
         for team in pole_teams:
-            sel = qualifiers[
-                (qualifiers["team"] == team) & (qualifiers["teamPosition"] == rank)
-            ]
-            if sel.empty:
-                continue
-            row = sel.iloc[0]
-            rows.append(
-                {
-                    "carNumber": int(row["carNumber"]),
-                    "driver": row["driver"],
-                    "team": team,
-                    "startingPosition": pos,
-                }
-            )
-            pos += 1
+            if rank < len(team_selections[team]):
+                car_num, info = team_selections[team][rank]
+                rows.append(
+                    {
+                        "carNumber": car_num,
+                        "driver": info["name"],
+                        "team": team,
+                        "startingPosition": pos,
+                    }
+                )
+                pos += 1
 
     return pd.DataFrame(rows)
