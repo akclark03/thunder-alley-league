@@ -15,9 +15,7 @@ const TEAM_COLORS: Record<string, string> = {
   "Oracle Oil Racing Team": "bg-neutral-900",
 };
 
-function teamDot(team: string) {
-  return TEAM_COLORS[team] ?? "bg-primary";
-}
+function teamDot(team: string) { return TEAM_COLORS[team] ?? "bg-primary"; }
 
 function Cell({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <td className={`px-3 py-2.5 text-sm ${className}`}>{children}</td>;
@@ -26,13 +24,21 @@ function HeadCell({ children, className = "" }: { children: React.ReactNode; cla
   return <th className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left ${className}`}>{children}</th>;
 }
 
+async function safeFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : ([] as unknown as T);
+}
+
 export default function PlayoffStandings() {
   const { viewingSeason } = useSeason();
   const { data: standings, isLoading } = useQuery<PlayoffStanding[]>({
     queryKey: ["/api/standings/playoffs", viewingSeason],
-    queryFn: () => fetch(`/api/standings/playoffs?season=${viewingSeason}`).then(r => r.json()),
+    queryFn: () => safeFetch<PlayoffStanding[]>(`/api/standings/playoffs?season=${viewingSeason}`),
   });
 
+  const rows = Array.isArray(standings) ? standings : [];
   const cutline = 12;
 
   return (
@@ -53,7 +59,7 @@ export default function PlayoffStandings() {
             <div className="p-6 space-y-3">
               {[...Array(12)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
-          ) : !standings || standings.length === 0 ? (
+          ) : rows.length === 0 ? (
             <div className="py-16 text-center">
               <Star className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground">No standings yet — run your first race to see results.</p>
@@ -75,7 +81,7 @@ export default function PlayoffStandings() {
                   </tr>
                 </thead>
                 <tbody>
-                  {standings.map((d, idx) => {
+                  {rows.map((d, idx) => {
                     const isAboveCut = idx < cutline;
                     const isCutline = idx === cutline - 1;
                     return (
@@ -103,9 +109,7 @@ export default function PlayoffStandings() {
                               <span className="font-semibold text-sm">{d.driver}</span>
                             </div>
                           </Cell>
-                          <Cell>
-                            <span className="text-xs text-muted-foreground">{d.team}</span>
-                          </Cell>
+                          <Cell><span className="text-xs text-muted-foreground">{d.team}</span></Cell>
                           <Cell className="text-right font-bold tabular-nums">
                             <span className={isAboveCut ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}>
                               {d.playoffPoints}
@@ -113,7 +117,7 @@ export default function PlayoffStandings() {
                           </Cell>
                           <Cell className="text-right tabular-nums text-xs">
                             {d.margin ? (
-                              <span className={d.margin.startsWith("+") ? "text-green-600 dark:text-green-400 font-semibold" : "text-red-500 font-semibold"}>
+                              <span className={String(d.margin).startsWith("+") ? "text-green-600 dark:text-green-400 font-semibold" : "text-red-500 font-semibold"}>
                                 {d.margin}
                               </span>
                             ) : "—"}
@@ -128,8 +132,7 @@ export default function PlayoffStandings() {
                           <Cell className="text-right tabular-nums">{d.top5s}</Cell>
                           <Cell className="text-right tabular-nums">{d.turnsLed}</Cell>
                         </tr>
-                        {/* Cutline separator */}
-                        {isCutline && standings.length > cutline && (
+                        {isCutline && rows.length > cutline && (
                           <tr key="cutline-sep" className="border-b-0">
                             <td colSpan={9} className="px-3 py-0">
                               <div className="flex items-center gap-2 py-1">

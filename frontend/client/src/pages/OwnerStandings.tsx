@@ -15,9 +15,7 @@ const TEAM_COLORS: Record<string, string> = {
   "Oracle Oil Racing Team": "bg-neutral-900",
 };
 
-function teamDot(team: string) {
-  return TEAM_COLORS[team] ?? "bg-primary";
-}
+function teamDot(team: string) { return TEAM_COLORS[team] ?? "bg-primary"; }
 
 function PosBadge({ pos }: { pos: number }) {
   if (pos === 1) return <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-400 text-amber-900 text-xs font-bold">1</span>;
@@ -33,12 +31,21 @@ function HeadCell({ children, className = "" }: { children: React.ReactNode; cla
   return <th className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left ${className}`}>{children}</th>;
 }
 
+async function safeFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : ([] as unknown as T);
+}
+
 export default function OwnerStandings() {
   const { viewingSeason } = useSeason();
   const { data: standings, isLoading } = useQuery<OwnerStanding[]>({
     queryKey: ["/api/standings/owners", viewingSeason],
-    queryFn: () => fetch(`/api/standings/owners?season=${viewingSeason}`).then(r => r.json()),
+    queryFn: () => safeFetch<OwnerStanding[]>(`/api/standings/owners?season=${viewingSeason}`),
   });
+
+  const rows = Array.isArray(standings) ? standings : [];
 
   return (
     <div className="p-6 max-w-full">
@@ -58,7 +65,7 @@ export default function OwnerStandings() {
             <div className="p-6 space-y-3">
               {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
-          ) : !standings || standings.length === 0 ? (
+          ) : rows.length === 0 ? (
             <div className="py-16 text-center">
               <Trophy className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground">No standings yet — run your first race to see results.</p>
@@ -80,35 +87,27 @@ export default function OwnerStandings() {
                   </tr>
                 </thead>
                 <tbody>
-                  {standings.map((o, idx) => (
+                  {rows.map((o, idx) => (
                     <tr
                       key={o.team}
                       className={`border-b border-border last:border-0 transition-colors hover:bg-muted/20 ${idx === 0 ? "bg-amber-400/5" : ""}`}
                       data-testid={`row-owner-${o.team.replace(/\s+/g, "-")}`}
                     >
-                      <Cell className="text-center">
-                        <PosBadge pos={o.position} />
-                      </Cell>
+                      <Cell className="text-center"><PosBadge pos={o.position} /></Cell>
                       <Cell>
                         <div className="flex items-center gap-2">
                           <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${teamDot(o.team)}`} />
                           <span className="font-semibold text-sm">{o.team}</span>
                         </div>
                       </Cell>
-                      <Cell>
-                        <span className="text-xs text-muted-foreground">{o.owner ?? <span className="italic">—</span>}</span>
-                      </Cell>
-                      <Cell className="text-right font-bold tabular-nums text-primary">
-                        {o.points}
-                      </Cell>
+                      <Cell><span className="text-xs text-muted-foreground">{o.owner ?? <span className="italic">—</span>}</span></Cell>
+                      <Cell className="text-right font-bold tabular-nums text-primary">{o.points}</Cell>
                       <Cell className="text-right tabular-nums text-muted-foreground text-xs">
                         {o.behind === 0 ? <span className="text-primary font-semibold">—</span> : `-${o.behind}`}
                       </Cell>
                       <Cell className="text-right tabular-nums">
                         {o.wins > 0 ? (
-                          <Badge variant="outline" className="text-xs font-bold text-amber-600 border-amber-400/40 bg-amber-400/10">
-                            {o.wins}
-                          </Badge>
+                          <Badge variant="outline" className="text-xs font-bold text-amber-600 border-amber-400/40 bg-amber-400/10">{o.wins}</Badge>
                         ) : "0"}
                       </Cell>
                       <Cell className="text-right tabular-nums">{o.top5s}</Cell>

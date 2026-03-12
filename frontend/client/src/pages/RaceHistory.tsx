@@ -18,40 +18,33 @@ const TEAM_COLORS: Record<string, string> = {
   "Oracle Oil Racing Team": "bg-neutral-900",
 };
 
-function teamDot(team: string) {
-  return TEAM_COLORS[team] ?? "bg-primary";
-}
+function teamDot(team: string) { return TEAM_COLORS[team] ?? "bg-primary"; }
 
 type CarResult = {
-  finish: number;
-  carNumber: number;
-  driver: string;
-  team: string;
-  startingPos: number;
-  turnsLed: number;
-  points: number;
-  playoffPoints: number;
-  qualifyingPoints: number;
+  finish: number; carNumber: number; driver: string; team: string;
+  startingPos: number; turnsLed: number; points: number; playoffPoints: number; qualifyingPoints: number;
+};
+type TeamResult = {
+  position: number; team: string; totalPoints: number; turnsLed: number; avgFinish: number; drivers: number;
 };
 
-type TeamResult = {
-  position: number;
-  team: string;
-  totalPoints: number;
-  turnsLed: number;
-  avgFinish: number;
-  drivers: number;
-};
+async function safeFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : ([] as unknown as T);
+}
 
 function RaceCard({ race }: { race: Race }) {
   const [expanded, setExpanded] = useState(false);
-  const results = (race.results as CarResult[]).sort((a, b) => a.finish - b.finish);
-  const teamResults = (race.teamResults as TeamResult[]).sort((a, b) => a.position - b.position);
+  const rawResults = Array.isArray(race.results) ? race.results as CarResult[] : [];
+  const rawTeamResults = Array.isArray(race.teamResults) ? race.teamResults as TeamResult[] : [];
+  const results = [...rawResults].sort((a, b) => a.finish - b.finish);
+  const teamResults = [...rawTeamResults].sort((a, b) => a.position - b.position);
   const winner = results[0];
 
   return (
     <Card className="overflow-hidden" data-testid={`card-race-${race.id}`}>
-      {/* Race header — always visible */}
       <button
         className="w-full text-left"
         onClick={() => setExpanded((v) => !v)}
@@ -85,11 +78,9 @@ function RaceCard({ race }: { race: Race }) {
         </CardHeader>
       </button>
 
-      {/* Expanded results */}
       {expanded && (
         <CardContent className="pt-0 border-t border-border">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
-            {/* Car results */}
             <div>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
                 <Car className="w-3.5 h-3.5" /> Driver Results
@@ -133,7 +124,6 @@ function RaceCard({ race }: { race: Race }) {
               </div>
             </div>
 
-            {/* Team results */}
             <div>
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2 flex items-center gap-1.5">
                 <Trophy className="w-3.5 h-3.5" /> Team Results
@@ -179,10 +169,12 @@ export default function RaceHistory() {
   const { viewingSeason, isCurrentSeason } = useSeason();
   const { data: races, isLoading } = useQuery<Race[]>({
     queryKey: ["/api/races", viewingSeason],
-    queryFn: () => fetch(`/api/races?season=${viewingSeason}`).then(r => r.json()),
+    queryFn: () => safeFetch<Race[]>(`/api/races?season=${viewingSeason}`),
   });
 
-  const sorted = races ? [...races].reverse() : [];
+  const safeRaces = Array.isArray(races) ? races : [];
+  const sorted = [...safeRaces].reverse();
+  const raceCount = safeRaces.length;
 
   return (
     <div className="p-6 max-w-5xl">
@@ -194,7 +186,7 @@ export default function RaceHistory() {
           <div>
             <h1 className="text-xl font-bold" data-testid="text-page-title">Race History</h1>
             <p className="text-sm text-muted-foreground">
-              Season {viewingSeason} · {isLoading ? "Loading…" : `${races?.length ?? 0} race${(races?.length ?? 0) !== 1 ? "s" : ""} run`}{!isCurrentSeason && " (past season)"}
+              Season {viewingSeason} · {isLoading ? "Loading…" : `${raceCount} race${raceCount !== 1 ? "s" : ""} run`}{!isCurrentSeason && " (past season)"}
             </p>
           </div>
         </div>

@@ -4,9 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { History, Trophy, Users, Star, Flag, ChevronDown, ChevronUp } from "lucide-react";
+import { History, Trophy, Users, Flag } from "lucide-react";
 import { useSeason, type SeasonMeta } from "@/contexts/SeasonContext";
-import type { DriverStanding, OwnerStanding, PlayoffStanding } from "@/types/standings";
+import type { DriverStanding, OwnerStanding } from "@/types/standings";
 import type { Race } from "@shared/schema";
 
 const TEAM_COLORS: Record<string, string> = {
@@ -19,6 +19,13 @@ const TEAM_COLORS: Record<string, string> = {
 };
 function teamDot(team: string) { return TEAM_COLORS[team] ?? "bg-primary"; }
 
+async function safeFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : ([] as unknown as T);
+}
+
 function PosBadge({ pos }: { pos: number }) {
   if (pos === 1) return <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-amber-900 text-xs font-bold">1</span>;
   if (pos === 2) return <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-300 text-slate-800 text-xs font-bold">2</span>;
@@ -26,13 +33,8 @@ function PosBadge({ pos }: { pos: number }) {
   return <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-muted text-muted-foreground text-xs font-bold">{pos}</span>;
 }
 
-// ── Season card in the list ───────────────────────────────────────────────────
-
 function SeasonCard({ meta, isActive, isSelected, onClick }: {
-  meta: SeasonMeta;
-  isActive: boolean;
-  isSelected: boolean;
-  onClick: () => void;
+  meta: SeasonMeta; isActive: boolean; isSelected: boolean; onClick: () => void;
 }) {
   return (
     <button
@@ -72,16 +74,16 @@ function SeasonCard({ meta, isActive, isSelected, onClick }: {
   );
 }
 
-// ── Standings tables (compact) ───────────────────────────────────────────────
-
 function DriverTable({ season }: { season: number }) {
   const { data, isLoading } = useQuery<DriverStanding[]>({
     queryKey: ["/api/standings/drivers", season],
-    queryFn: () => fetch(`/api/standings/drivers?season=${season}`).then(r => r.json()),
+    queryFn: () => safeFetch<DriverStanding[]>(`/api/standings/drivers?season=${season}`),
   });
 
+  const rows = Array.isArray(data) ? data : [];
+
   if (isLoading) return <div className="space-y-2 p-4">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}</div>;
-  if (!data || data.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">No data for this season.</p>;
+  if (rows.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">No data for this season.</p>;
 
   return (
     <div className="overflow-x-auto">
@@ -94,7 +96,7 @@ function DriverTable({ season }: { season: number }) {
           </tr>
         </thead>
         <tbody>
-          {data.map((d, idx) => (
+          {rows.map((d, idx) => (
             <tr key={d.carNumber} className={`border-b border-border/60 last:border-0 hover:bg-muted/20 ${idx === 0 ? "bg-amber-400/5" : ""}`} data-testid={`row-season-driver-${d.carNumber}`}>
               <td className="px-3 py-2"><PosBadge pos={d.position} /></td>
               <td className="px-3 py-2 font-mono text-xs text-muted-foreground">#{d.carNumber}</td>
@@ -123,11 +125,13 @@ function DriverTable({ season }: { season: number }) {
 function OwnerTable({ season }: { season: number }) {
   const { data, isLoading } = useQuery<OwnerStanding[]>({
     queryKey: ["/api/standings/owners", season],
-    queryFn: () => fetch(`/api/standings/owners?season=${season}`).then(r => r.json()),
+    queryFn: () => safeFetch<OwnerStanding[]>(`/api/standings/owners?season=${season}`),
   });
 
+  const rows = Array.isArray(data) ? data : [];
+
   if (isLoading) return <div className="space-y-2 p-4">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-8 w-full" />)}</div>;
-  if (!data || data.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">No data for this season.</p>;
+  if (rows.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">No data for this season.</p>;
 
   return (
     <div className="overflow-x-auto">
@@ -140,7 +144,7 @@ function OwnerTable({ season }: { season: number }) {
           </tr>
         </thead>
         <tbody>
-          {data.map((o, idx) => (
+          {rows.map((o, idx) => (
             <tr key={o.team} className={`border-b border-border/60 last:border-0 hover:bg-muted/20 ${idx === 0 ? "bg-amber-400/5" : ""}`} data-testid={`row-season-owner-${o.team.replace(/\s+/g,"-")}`}>
               <td className="px-3 py-2"><PosBadge pos={o.position} /></td>
               <td className="px-3 py-2">
@@ -167,16 +171,18 @@ function OwnerTable({ season }: { season: number }) {
 function RaceLog({ season }: { season: number }) {
   const { data, isLoading } = useQuery<Race[]>({
     queryKey: ["/api/races", season],
-    queryFn: () => fetch(`/api/races?season=${season}`).then(r => r.json()),
+    queryFn: () => safeFetch<Race[]>(`/api/races?season=${season}`),
   });
 
+  const rows = Array.isArray(data) ? data : [];
+
   if (isLoading) return <div className="space-y-2 p-4">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>;
-  if (!data || data.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">No races run in this season.</p>;
+  if (rows.length === 0) return <p className="text-sm text-muted-foreground text-center py-8">No races run in this season.</p>;
 
   return (
     <div className="divide-y divide-border">
-      {[...data].reverse().map((r) => {
-        const results = r.results as any[];
+      {[...rows].reverse().map((r) => {
+        const results = Array.isArray(r.results) ? r.results as any[] : [];
         const winner = results.find((x: any) => x.finish === 1);
         return (
           <div key={r.id} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/20 transition-colors" data-testid={`row-season-race-${r.id}`}>
@@ -185,7 +191,7 @@ function RaceLog({ season }: { season: number }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-xs font-semibold">Race #{r.raceNum} <span className="text-muted-foreground font-normal">· {r.date}</span></div>
-              <div className="text-xs text-muted-foreground">{r.trackId.replace(/_/g, " ")}</div>
+              <div className="text-xs text-muted-foreground">{String(r.trackId ?? "").replace(/_/g, " ")}</div>
             </div>
             {winner && (
               <div className="flex items-center gap-1.5 text-xs">
@@ -201,12 +207,11 @@ function RaceLog({ season }: { season: number }) {
   );
 }
 
-// ── Main page ────────────────────────────────────────────────────────────────
-
 export default function SeasonHistory() {
   const { activeSeason, seasons, isLoading: seasonsLoading } = useSeason();
   const [selectedSeason, setSelectedSeason] = useState<number | null>(null);
 
+  const safeSeasons = Array.isArray(seasons) ? seasons : [];
   const viewing = selectedSeason ?? activeSeason;
 
   return (
@@ -222,14 +227,13 @@ export default function SeasonHistory() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Season list */}
         <div className="lg:col-span-1 space-y-2">
           {seasonsLoading ? (
             [...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)
-          ) : seasons.length === 0 ? (
+          ) : safeSeasons.length === 0 ? (
             <p className="text-sm text-muted-foreground">No seasons found.</p>
           ) : (
-            seasons.map((meta) => (
+            safeSeasons.map((meta) => (
               <SeasonCard
                 key={meta.season}
                 meta={meta}
@@ -241,7 +245,6 @@ export default function SeasonHistory() {
           )}
         </div>
 
-        {/* Season detail */}
         <div className="lg:col-span-2">
           <Card>
             <CardHeader className="pb-0">
@@ -265,15 +268,9 @@ export default function SeasonHistory() {
                     <Flag className="w-3.5 h-3.5" /> Races
                   </TabsTrigger>
                 </TabsList>
-                <TabsContent value="drivers">
-                  <DriverTable season={viewing} />
-                </TabsContent>
-                <TabsContent value="owners">
-                  <OwnerTable season={viewing} />
-                </TabsContent>
-                <TabsContent value="races">
-                  <RaceLog season={viewing} />
-                </TabsContent>
+                <TabsContent value="drivers"><DriverTable season={viewing} /></TabsContent>
+                <TabsContent value="owners"><OwnerTable season={viewing} /></TabsContent>
+                <TabsContent value="races"><RaceLog season={viewing} /></TabsContent>
               </Tabs>
             </CardContent>
           </Card>

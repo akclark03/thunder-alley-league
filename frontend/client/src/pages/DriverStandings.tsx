@@ -33,12 +33,21 @@ function HeadCell({ children, className = "" }: { children: React.ReactNode; cla
   return <th className={`px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide text-left ${className}`}>{children}</th>;
 }
 
+async function safeFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${res.status}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : ([] as unknown as T);
+}
+
 export default function DriverStandings() {
   const { viewingSeason } = useSeason();
   const { data: standings, isLoading } = useQuery<DriverStanding[]>({
     queryKey: ["/api/standings/drivers", viewingSeason],
-    queryFn: () => fetch(`/api/standings/drivers?season=${viewingSeason}`).then(r => r.json()),
+    queryFn: () => safeFetch<DriverStanding[]>(`/api/standings/drivers?season=${viewingSeason}`),
   });
+
+  const rows = Array.isArray(standings) ? standings : [];
 
   return (
     <div className="p-6 max-w-full">
@@ -58,7 +67,7 @@ export default function DriverStandings() {
             <div className="p-6 space-y-3">
               {[...Array(10)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
             </div>
-          ) : !standings || standings.length === 0 ? (
+          ) : rows.length === 0 ? (
             <div className="py-16 text-center">
               <Users className="w-10 h-10 mx-auto text-muted-foreground/30 mb-3" />
               <p className="text-sm text-muted-foreground">No standings yet — run your first race to see results.</p>
@@ -83,15 +92,13 @@ export default function DriverStandings() {
                   </tr>
                 </thead>
                 <tbody>
-                  {standings.map((d, idx) => (
+                  {rows.map((d, idx) => (
                     <tr
                       key={d.carNumber}
                       className={`border-b border-border last:border-0 transition-colors hover:bg-muted/20 ${idx === 0 ? "bg-amber-400/5" : ""}`}
                       data-testid={`row-driver-${d.carNumber}`}
                     >
-                      <Cell className="text-center">
-                        <PosBadge pos={d.position} />
-                      </Cell>
+                      <Cell className="text-center"><PosBadge pos={d.position} /></Cell>
                       <Cell className="text-center">
                         <span className="tabular-nums font-mono text-xs font-semibold text-muted-foreground">#{d.carNumber}</span>
                       </Cell>
@@ -101,21 +108,15 @@ export default function DriverStandings() {
                           <span className="font-semibold text-sm">{d.driver}</span>
                         </div>
                       </Cell>
-                      <Cell>
-                        <span className="text-xs text-muted-foreground">{d.team}</span>
-                      </Cell>
-                      <Cell className="text-right font-bold tabular-nums text-primary">
-                        {d.points}
-                      </Cell>
+                      <Cell><span className="text-xs text-muted-foreground">{d.team}</span></Cell>
+                      <Cell className="text-right font-bold tabular-nums text-primary">{d.points}</Cell>
                       <Cell className="text-right tabular-nums text-muted-foreground text-xs">
                         {d.behind === 0 ? <span className="text-primary font-semibold">—</span> : `-${d.behind}`}
                       </Cell>
                       <Cell className="text-right tabular-nums">{d.starts}</Cell>
                       <Cell className="text-right tabular-nums">
                         {d.wins > 0 ? (
-                          <Badge variant="outline" className="text-xs font-bold text-amber-600 border-amber-400/40 bg-amber-400/10">
-                            {d.wins}
-                          </Badge>
+                          <Badge variant="outline" className="text-xs font-bold text-amber-600 border-amber-400/40 bg-amber-400/10">{d.wins}</Badge>
                         ) : "0"}
                       </Cell>
                       <Cell className="text-right tabular-nums">{d.top5s}</Cell>
