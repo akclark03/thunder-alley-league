@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SeasonProvider, useSeason } from "@/contexts/SeasonContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
@@ -55,6 +56,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        <ErrorBoundary>
         <SeasonProvider>
           <SidebarProvider style={sidebarStyle}>
             <div className="flex h-screen w-full overflow-hidden">
@@ -74,6 +76,7 @@ function App() {
             </div>
           </SidebarProvider>
         </SeasonProvider>
+        </ErrorBoundary>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

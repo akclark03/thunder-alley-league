@@ -30,7 +30,9 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(`${API_BASE}${queryKey.join("/")}`);
+    // queryKey[0] is always the base URL path; extra segments are cache discriminators, not path parts
+    const url = `${API_BASE}${queryKey[0]}`;
+    const res = await fetch(url);
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

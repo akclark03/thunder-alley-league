@@ -40,6 +40,9 @@ const SeasonContext = createContext<SeasonContextValue>({
 export function SeasonProvider({ children }: { children: React.ReactNode }) {
   const { data, isLoading } = useQuery<SeasonData>({
     queryKey: ["/api/season"],
+    retry: false,
+    // Never throw — degrade gracefully to season 2 defaults if the API is unreachable
+    throwOnError: false,
   });
 
   const [viewingSeason, setViewingSeasonState] = useState<number | null>(null);
