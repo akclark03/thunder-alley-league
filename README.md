@@ -1,158 +1,235 @@
 # Thunder Alley League Manager
 
-A Python-based race management system for tracking Thunder Alley board game league seasons. Manage races, calculate standings, and maintain historical season data with JSON-based configuration and CSV exports.
+A full-stack race management system for tracking Thunder Alley board game league seasons. Run races, track standings, and view full season history — all from a NASCAR-style web app backed by a Python scoring engine.
 
-## Features
+## Overview
 
-- **Interactive Race Management**: Run races with team/track selection, qualifying, and result entry
-- **Automated Scoring**: Points calculation including race points, playoff points, qualifying points, and team bonuses
-- **Season Tracking**: Persistent storage of race results and cumulative season statistics
-- **Standings Calculation**: Driver, owner, and playoff standings with tie-breakers
-- **Team Results**: Track team performance per race with aggregate statistics
-- **Configurable Rules**: JSON-based points structures and league configuration
+The project has two main components:
 
-## Project Structure
+| Component | Description |
+|---|---|
+| `thunder_alley_league/` | Python CLI — race entry, scoring, CSV exports |
+| `frontend/` | Express + React web app — standings, race history, race wizard |
+
+---
+
+## Web App (Frontend)
+
+A NASCAR.com-style dashboard built with **Express + Vite + React 18 + Tailwind CSS + shadcn/ui**.
+
+### Pages
+
+| Page | Route | Description |
+|---|---|---|
+| Dashboard | `/#/` | Season overview — stat cards, standings previews, recent races |
+| Driver Standings | `/#/standings/drivers` | Full standings table: Pos, Car#, Driver, Team, Points, Behind, Starts, Wins, Top 5, Top 10, Turns Led, Playoff Pts |
+| Owner Standings | `/#/standings/owners` | Team standings: Pos, Team, Owner, Points, Behind, Wins, Top 5, Top 10, Turns Led |
+| Playoff Standings | `/#/standings/playoffs` | Top-12 cutline with +/– margin, green/red in/out styling |
+| Race History | `/#/races` | Expandable race cards — driver results and team results per race |
+| Run a Race | `/#/race/new` | 6-step race wizard: Players → Teams → Track → Grid → Results → Summary |
+
+### Tech Stack
+
+- **Backend**: Express (Node.js), in-memory storage with JSON persistence to `data/raw/`
+- **Frontend**: React 18, Vite, Tailwind CSS, shadcn/ui, TanStack Query, wouter (hash routing)
+- **Font**: Cabinet Grotesk
+- **Theme**: Dark asphalt + red/gold racing accent
+
+### Running the Web App
 
 ```bash
-thunder-alley-league/
-├── config/ # League configuration files
-│ ├── points_structure.json # Race and playoff points definitions
-│ ├── pole_position.json # Team pole position rankings
-│ ├── drivers.json # Driver and team roster
-│ ├── team_owners.json # Team ownership mapping
-│ └── tracks.json # Track definitions
-├── data/
-│ ├── raw/ # Individual race JSONs (race_*.json)
-│ └── season/ # Season aggregate data
-│ ├── season_2_results.csv # All race results (current season)
-│ ├── driver_standings.csv # Driver standings
-│ ├── owner_standings.csv # Owner/team standings
-│ └── playoff_standings.csv # Playoff points standings
-├── doc/ # League rules documentation
-└── thunder_alley_league/ # Python package
-├── init.py
-├── main.py # CLI entry point
-├── io_utils.py # File I/O and data loading
-├── qualifying.py # Qualifying and grid generation
-├── race.py # Race orchestration and user interaction
-├── scoring.py # Points calculation logic
-└── standings.py # Standings aggregation
+cd frontend
+npm install
+npm run dev
 ```
 
-## Installation
+Opens at `http://localhost:5000`.
 
-### Clone the repository
+### Building for Production
+
+```bash
+cd frontend
+npm run build
+NODE_ENV=production node dist/index.cjs
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/standings/drivers` | Driver season standings |
+| `GET` | `/api/standings/owners` | Owner/team standings |
+| `GET` | `/api/standings/playoffs` | Playoff points standings |
+| `GET` | `/api/races` | All races |
+| `GET` | `/api/races/:id` | Single race detail |
+| `GET` | `/api/config/teams` | Team list |
+| `GET` | `/api/config/tracks` | Track list |
+| `GET` | `/api/config/drivers` | Driver roster |
+| `POST` | `/api/grid` | Generate starting grid |
+| `POST` | `/api/race` | Score and save a race |
+
+### Frontend Project Structure
+
+```
+frontend/
+├── client/
+│   └── src/
+│       ├── components/
+│       │   ├── app-sidebar.tsx       # Sidebar nav (logo + all routes)
+│       │   └── ui/                   # shadcn/ui components
+│       ├── pages/
+│       │   ├── Dashboard.tsx
+│       │   ├── DriverStandings.tsx
+│       │   ├── OwnerStandings.tsx
+│       │   ├── PlayoffStandings.tsx
+│       │   ├── RaceHistory.tsx
+│       │   └── RaceWizard.tsx        # 6-step race entry wizard
+│       ├── types/
+│       │   └── standings.ts          # DriverStanding, OwnerStanding, PlayoffStanding
+│       └── App.tsx                   # SidebarProvider shell + Router
+└── server/
+    ├── routes.ts                     # All API endpoints
+    └── storage.ts                    # In-memory store + standings computation
+```
+
+---
+
+## Python CLI
+
+### Installation
 
 ```bash
 git clone <repo-url>
 cd thunder-alley-league
-```
-
-### Create virtual environment (optional but recommended)
-
-The project uses conda for dependency management. See `environment.yml`:
-
-```bash
 conda env create -f environment.yml
-```
-
-## Usage
-
-### Activate the environment (if not already active)
-
-```bash
 conda activate thunder-alley-league
 ```
 
-### Run the league manager
+### Usage
 
 ```bash
 python -m thunder_alley_league.main
 ```
 
-### Main Menu Options
+### Menu Options
 
-#### 1. Start a race
+1. **Start a race** — select players, teams, track; enter finishes and turns led; auto-saves results
+2. **Recalculate standings** — rebuild CSVs from all race JSONs
+3. **Exit**
 
-- Select number of players (2-7)
-- Choose teams (3-4 cars per team based on player count)
-- Select track
-- View qualifying/starting grid
-- Enter finishing positions and turns led
-- Automatically saves race results and updates season
-
-#### 2. Recalculate standings
-
-- Rebuilds season CSV from all race JSONs
-- Updates driver, owner, and playoff standings
-- Saves standings to CSV files
-
-#### 3. Exit
+---
 
 ## Scoring System
 
 ### Race Points
 
-- Position-based points from `points_structure.json`
-- +1 point per turn led
-- +1 bonus point to best finisher on team that led most turns
+- Position-based points from `config/points_structure.json`
+- +1 point per turn led (added to that driver's total)
+- +1 bonus point to the team that led the most turns (best finisher on that team)
 
 ### Playoff Points
 
-- Position-based playoff points from `points_structure.json`
+| Position | Points |
+|---|---|
+| 1st | 16 |
+| 2nd | 12 |
+| 3rd | 11 |
+| 4th | 10 |
+| 5th | 9 |
+| 6th | 8 |
+| … | strictly descending |
+| 12th | 2 |
+| 13th+ | 1 |
 
 ### Qualifying Points
 
-- Position-based points from `points_structure.json`
+- Position-based points from `config/points_structure.json`
 - +4 bonus points for pole position starter
 
-### Relative Finish
+### Standings Tiebreakers
 
-- Team-relative finishing position (1 = best on team)
+Driver standings: most wins → most top 5s → most top 10s → most turns led
+
+Owner standings: most wins → most top 5s → most top 10s
+
+Playoff standings: most wins → most top 5s → most turns led
+
+> **Note:** Turns led is a tiebreaker in owner standings — it is not a direct points bonus for owners.
+
+---
+
+## Project Structure
+
+```
+thunder-alley-league/
+├── config/                          # League configuration (JSON)
+│   ├── points_structure.json        # Race, playoff, qualifying points
+│   ├── pole_position.json           # Team pole order
+│   ├── drivers.json                 # Driver roster (27 drivers, 5 active teams)
+│   ├── team_owners.json             # Team → owner mapping
+│   └── tracks.json                  # Track definitions
+├── data/
+│   ├── raw/                         # race_{date}_r{num}.json — one file per race
+│   └── season/                      # Auto-generated CSVs
+│       ├── season_2_results.csv
+│       ├── driver_standings.csv
+│       ├── owner_standings.csv
+│       └── playoff_standings.csv
+├── doc/                             # Official league rules
+├── frontend/                        # Web app (Express + React)
+└── thunder_alley_league/            # Python package
+    ├── main.py                      # CLI entry point
+    ├── io_utils.py                  # File I/O (CURRENT_SEASON = 2)
+    ├── qualifying.py                # Grid generation
+    ├── race.py                      # Race orchestration
+    ├── scoring.py                   # Points calculation
+    └── standings.py                 # Standings aggregation
+```
+
+---
+
+## Teams
+
+| Team | Color |
+|---|---|
+| Howitzer Racing | Yellow |
+| Red Fury Racing | Red |
+| Pockets Racing | Green |
+| Quaker-Stubbs Motorsports | Blue |
+| Mythos Motorsports | Purple |
+| Oracle Oil Racing Team | Black |
+
+---
 
 ## Configuration
 
-### Season Settings
+### Change Season
 
-Edit `thunder_alley_league/io_utils.py` to change the current season:
+Edit `thunder_alley_league/io_utils.py`:
 
 ```python
-CURRENT_SEASON = 2 # Update for new seasons
+CURRENT_SEASON = 2  # increment for new seasons
 ```
 
 ### Points Structure
 
-Edit `config/*.json`:
+Edit `config/points_structure.json` to adjust race, playoff, or qualifying points.
 
-## Data Persistence
-
-- **Race Data**: Each race saved as `data/raw/race_{date}_r{num}.json`
-- **Season CSV**: Flattened view of all races in `data/season/season_2_results.csv`
-- **Standings**: Auto-generated CSV files in `data/season/`
-- **Team Results**: Included in race JSON under `teamResults`
-
-## Development
-
-### Adding New Features
-
-- **Scoring logic**: Modify `scoring.py`
-- **Standings calculations**: Modify `standings.py`
-- **Data I/O**: Modify `io_utils.py`
-- **Race workflow**: Modify `race.py`
-- **Qualifying system**: Modify `qualifying.py`
+---
 
 ## Requirements
 
-- Python 3.10+
-- pandas
-- numpy
+- **Python**: 3.10+ — managed via conda (`environment.yml`)
+- **Node.js**: 18+ — managed via npm (`frontend/package.json`)
 
-Managed via conda environment (see `environment.yml`)
+Dependencies: `pandas`, `numpy` (Python) · `express`, `react`, `vite`, `tailwindcss`, `@tanstack/react-query` (Node)
+
+---
 
 ## License
 
-See LICENSE file for details.
+See `LICENSE` file for details.
 
 ## Documentation
 
-See `doc/` folder for official Thunder Alley league rules and modifications.
+See `doc/` for official Thunder Alley league rules and modifications.
