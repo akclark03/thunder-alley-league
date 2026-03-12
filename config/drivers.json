@@ -169,6 +169,16 @@
       "carNumber": 105,
       "driver": "Driver 105",
       "team": "Oracle Oil Racing Team"
+    },
+    "106": {
+      "carNumber": 106,
+      "driver": "Driver 106",
+      "team": "Mythos Motorsports"
+    },
+    "107": {
+      "carNumber": 107,
+      "driver": "Driver 107",
+      "team": "Mythos Motorsports"
     }
   }
 }
