@@ -3,7 +3,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -542,23 +541,8 @@ export default function RaceWizard() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="border-b border-border bg-card px-4 py-3 flex items-center justify-between" data-testid="app-header">
-        <div className="flex items-center gap-2.5">
-          {/* SVG Logo */}
-          <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="Thunder Alley" className="flex-shrink-0">
-            <rect width="28" height="28" rx="6" fill="hsl(var(--primary))" />
-            <path d="M16 4L8 16h7l-3 8 11-13h-7l3-7z" fill="white" />
-          </svg>
-          <span className="font-bold text-base tracking-tight">Thunder Alley</span>
-        </div>
-        <Badge variant="outline" className="text-xs font-mono" data-testid="badge-season">Season 2</Badge>
-      </header>
-
-      {/* Main */}
-      <main className="flex-1 flex items-start justify-center p-4 pt-8">
-        <div className="w-full max-w-xl">
+    <div className="flex-1 flex items-start justify-center p-4 pt-8">
+      <div className="w-full max-w-xl">
           <StepBar current={step} />
 
           <Card className="shadow-lg">
@@ -624,20 +608,7 @@ export default function RaceWizard() {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="py-4 text-center text-xs text-muted-foreground border-t border-border">
-        <a
-          href="https://www.perplexity.ai/computer"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-foreground transition-colors"
-        >
-          Created with Perplexity Computer
-        </a>
-      </footer>
+      </div>
     </div>
   );
 }
