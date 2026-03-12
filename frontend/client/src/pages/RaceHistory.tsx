@@ -9,12 +9,12 @@ import { Clock, ChevronDown, ChevronUp, Trophy, Flag, Car } from "lucide-react";
 import type { Race } from "@shared/schema";
 
 const TEAM_COLORS: Record<string, string> = {
-  "Howitzer Racing": "bg-red-600",
-  "Red Fury Racing": "bg-rose-500",
-  "Pockets Racing": "bg-blue-600",
-  "Quaker-Stubbs Motorsports": "bg-amber-500",
+  "Howitzer Racing": "bg-yellow-400",
+  "Red Fury Racing": "bg-red-600",
+  "Pockets Racing": "bg-green-600",
+  "Quaker-Stubbs Motorsports": "bg-blue-600",
   "Mythos Motorsports": "bg-purple-600",
-  "Oracle Oil Racing Team": "bg-emerald-600",
+  "Oracle Oil Racing Team": "bg-neutral-900",
 };
 
 function teamDot(team: string) {

@@ -192,12 +192,12 @@ thunder-alley-league/
 
 | Team | Color |
 |---|---|
-| Howitzer Racing | Red |
-| Red Fury Racing | Rose |
-| Pockets Racing | Blue |
-| Quaker-Stubbs Motorsports | Amber |
+| Howitzer Racing | Yellow |
+| Red Fury Racing | Red |
+| Pockets Racing | Green |
+| Quaker-Stubbs Motorsports | Blue |
 | Mythos Motorsports | Purple |
-| Oracle Oil Racing Team | Emerald |
+| Oracle Oil Racing Team | Black |
 
 ---
 
