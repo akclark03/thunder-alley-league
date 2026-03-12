@@ -61,9 +61,7 @@ def qualifying_sequence(all_race_data):
         .astype(int)
     )
 
-    # select top 4 per team and show key columns
-    # In qualifying_sequence(), replace the final selection line:
-    # select top N per team based on total number of teams
+    # Select top 4 per team
     qualifiers = (
         qualifying_agg[qualifying_agg["teamQualifyingRank"] <= 4]
         .sort_values(["team", "teamQualifyingRank"])
@@ -81,7 +79,7 @@ def starting_grid(teams, pole_position, qualifiers) -> pd.DataFrame:
     num_teams = len(teams)
     if num_teams == 2:
         cars_per_team = 6
-    if num_teams == 3:
+    elif num_teams == 3:
         cars_per_team = 5
     elif num_teams == 4:
         cars_per_team = 4

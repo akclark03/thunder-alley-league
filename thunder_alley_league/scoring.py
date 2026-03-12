@@ -21,9 +21,8 @@ def calc_qualifying_points(
 def _calculate_team_stats(
     results: list[dict], grid_idx: pd.DataFrame
 ) -> dict[str, list[int]]:
-    """Calculate team finishes."""
+    """Build a sorted list of finishing positions per team (DNQs excluded)."""
     team_finishes: dict[str, list[int]] = {}
-    team_turns_led: dict[str, int] = {}
 
     for result in results:
         if result["finish"] != "DNQ":
@@ -31,17 +30,10 @@ def _calculate_team_stats(
             row = grid_idx.loc[car]
             team = str(row["team"])
             finish_pos = int(result["finish"])
-            turns_led = int(result.get("turnsLed", 0))
 
-            if team not in team_finishes:
-                team_finishes[team] = []
-                team_turns_led[team] = 0
+            team_finishes.setdefault(team, []).append(finish_pos)
 
-            team_finishes[team].append(finish_pos)
-            team_turns_led[team] += turns_led
-
-    # Sort each team's finishes
-    for team, finishes in team_finishes.items():
+    for finishes in team_finishes.values():
         finishes.sort()
 
     return team_finishes

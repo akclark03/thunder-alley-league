@@ -11,7 +11,7 @@ def driver_standings(all_race_data):
         .agg(
             points=("points", "sum"),
             starts=("finish", lambda s: np.sum(s != "DNQ")),
-            wins=("finish", lambda s: np.sum(s == "1")),
+            wins=("finish", lambda s: np.sum(s == 1)),
             top5s=("finish", lambda s: np.sum(pd.to_numeric(s, errors="coerce") <= 5)),
             top10s=(
                 "finish",
@@ -57,7 +57,7 @@ def owner_standings(all_race_data, team_owners):
         all_race_data.groupby(["team"], dropna=False, sort=False)
         .agg(
             points=("points", "sum"),
-            wins=("finish", lambda s: np.sum(s == "1")),
+            wins=("finish", lambda s: np.sum(s == 1)),
             top5s=("finish", lambda s: np.sum(pd.to_numeric(s, errors="coerce") <= 5)),
             top10s=(
                 "finish",
@@ -90,7 +90,7 @@ def playoff_standings(all_race_data):
         all_race_data.groupby(["carNumber", "driver", "team"], dropna=False, sort=False)
         .agg(
             playoffPoints=("playoffPoints", "sum"),
-            wins=("finish", lambda s: np.sum(s == "1")),
+            wins=("finish", lambda s: np.sum(s == 1)),
             top5s=("finish", lambda s: np.sum(pd.to_numeric(s, errors="coerce") <= 5)),
             top10s=(
                 "finish",

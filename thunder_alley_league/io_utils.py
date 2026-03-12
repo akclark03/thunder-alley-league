@@ -14,7 +14,7 @@ CONFIG_DIR = BASE_DIR / "config"
 DATA_DIR = BASE_DIR / "data"
 RAW_RACES_DIR = DATA_DIR / "raw"
 SEASON_DIR = DATA_DIR / "season"
-SEASON_CSV_PATH = SEASON_DIR / f"season_{CURRENT_SEASON}_results.csv"  # Change this
+SEASON_CSV_PATH = SEASON_DIR / f"season_{CURRENT_SEASON}_results.csv"
 
 
 # ---------- JSON helpers ----------

@@ -72,7 +72,7 @@ python -m thunder_alley_league.main
 
 ### Main Menu Options
 
-#### 1. Start a race**
+#### 1. Start a race
 
 - Select number of players (2-7)
 - Choose teams (3-4 cars per team based on player count)
@@ -81,7 +81,7 @@ python -m thunder_alley_league.main
 - Enter finishing positions and turns led
 - Automatically saves race results and updates season
 
-#### 2. Recalculate standings**
+#### 2. Recalculate standings
 
 - Rebuilds season CSV from all race JSONs
 - Updates driver, owner, and playoff standings
