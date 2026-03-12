@@ -126,9 +126,9 @@ function scoreRace(
     const racePoints = pointsStructure.points[String(finishPos)] ?? 0;
     const playoffPoints = pointsStructure.playoffPoints[String(finishPos)] ?? 0;
 
-    // Qualifying points + pole bonus
+    // Qualifying points based on finish position only
     const qualBase = pointsStructure.qualifyingPoints[String(finishPos)] ?? 0;
-    const qualPoints = qualBase + (startingPos === 1 ? 4 : 0);
+    const qualPoints = qualBase;
 
     const totalPoints = racePoints + turnsLed;
     const relativeFinish = (teamFinishes[team]?.indexOf(finishPos) ?? 0) + 1;
