@@ -45,11 +45,11 @@ export default function Dashboard() {
     queryFn: () => fetch(`/api/races?season=${viewingSeason}`).then(r => r.json()),
   });
 
-  const topDrivers = drivers?.slice(0, 5) ?? [];
-  const topOwners = owners?.slice(0, 5) ?? [];
-  const recentRaces = races ? [...races].reverse().slice(0, 3) : [];
-  const totalRaces = races?.length ?? 0;
-  const leader = drivers?.[0];
+  const topDrivers = Array.isArray(drivers) ? drivers.slice(0, 5) : [];
+  const topOwners = Array.isArray(owners) ? owners.slice(0, 5) : [];
+  const recentRaces = Array.isArray(races) ? [...races].reverse().slice(0, 3) : [];
+  const totalRaces = Array.isArray(races) ? races.length : 0;
+  const leader = Array.isArray(drivers) ? drivers[0] : undefined;
 
   return (
     <div className="p-6 space-y-6 max-w-6xl mx-auto">
