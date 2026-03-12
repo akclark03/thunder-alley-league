@@ -10,6 +10,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import { SeasonProvider, useSeason } from "@/contexts/SeasonContext";
 
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
@@ -17,7 +18,18 @@ import DriverStandings from "@/pages/DriverStandings";
 import OwnerStandings from "@/pages/OwnerStandings";
 import PlayoffStandings from "@/pages/PlayoffStandings";
 import RaceHistory from "@/pages/RaceHistory";
+import SeasonHistory from "@/pages/SeasonHistory";
 import RaceWizard from "@/pages/RaceWizard";
+
+function SeasonBadge() {
+  const { viewingSeason, isCurrentSeason } = useSeason();
+  return (
+    <span className="text-xs font-medium text-muted-foreground">
+      Season {viewingSeason}
+      {!isCurrentSeason && <span className="ml-1 text-amber-500 font-semibold">(viewing past)</span>}
+    </span>
+  );
+}
 
 function AppRouter() {
   return (
@@ -27,6 +39,7 @@ function AppRouter() {
       <Route path="/standings/owners" component={OwnerStandings} />
       <Route path="/standings/playoffs" component={PlayoffStandings} />
       <Route path="/races" component={RaceHistory} />
+      <Route path="/seasons" component={SeasonHistory} />
       <Route path="/race/new" component={RaceWizard} />
       <Route component={NotFound} />
     </Switch>
@@ -42,25 +55,25 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <SidebarProvider style={sidebarStyle}>
-          <div className="flex h-screen w-full overflow-hidden">
-            <Router hook={useHashLocation}>
-              <AppSidebar />
-              <div className="flex flex-col flex-1 min-w-0">
-                {/* Top bar */}
-                <header className="flex items-center gap-2 h-12 px-4 border-b border-border bg-background/80 backdrop-blur-sm flex-shrink-0">
-                  <SidebarTrigger data-testid="button-sidebar-toggle" className="-ml-1" />
-                  <div className="h-4 w-px bg-border" />
-                  <span className="text-xs text-muted-foreground font-medium">Thunder Alley League Manager</span>
-                </header>
-                {/* Main content */}
-                <main className="flex-1 overflow-y-auto">
-                  <AppRouter />
-                </main>
-              </div>
-            </Router>
-          </div>
-        </SidebarProvider>
+        <SeasonProvider>
+          <SidebarProvider style={sidebarStyle}>
+            <div className="flex h-screen w-full overflow-hidden">
+              <Router hook={useHashLocation}>
+                <AppSidebar />
+                <div className="flex flex-col flex-1 min-w-0">
+                  <header className="flex items-center gap-2 h-12 px-4 border-b border-border bg-background/80 backdrop-blur-sm flex-shrink-0">
+                    <SidebarTrigger data-testid="button-sidebar-toggle" className="-ml-1" />
+                    <div className="h-4 w-px bg-border" />
+                    <SeasonBadge />
+                  </header>
+                  <main className="flex-1 overflow-y-auto">
+                    <AppRouter />
+                  </main>
+                </div>
+              </Router>
+            </div>
+          </SidebarProvider>
+        </SeasonProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

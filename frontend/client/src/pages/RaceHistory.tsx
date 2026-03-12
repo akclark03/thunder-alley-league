@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSeason } from "@/contexts/SeasonContext";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -175,8 +176,10 @@ function RaceCard({ race }: { race: Race }) {
 }
 
 export default function RaceHistory() {
+  const { viewingSeason, isCurrentSeason } = useSeason();
   const { data: races, isLoading } = useQuery<Race[]>({
-    queryKey: ["/api/races"],
+    queryKey: ["/api/races", viewingSeason],
+    queryFn: () => fetch(`/api/races?season=${viewingSeason}`).then(r => r.json()),
   });
 
   const sorted = races ? [...races].reverse() : [];
@@ -191,7 +194,7 @@ export default function RaceHistory() {
           <div>
             <h1 className="text-xl font-bold" data-testid="text-page-title">Race History</h1>
             <p className="text-sm text-muted-foreground">
-              {isLoading ? "Loading…" : `${races?.length ?? 0} race${(races?.length ?? 0) !== 1 ? "s" : ""} run`}
+              Season {viewingSeason} · {isLoading ? "Loading…" : `${races?.length ?? 0} race${(races?.length ?? 0) !== 1 ? "s" : ""} run`}{!isCurrentSeason && " (past season)"}
             </p>
           </div>
         </div>

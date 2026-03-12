@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useSeason } from "@/contexts/SeasonContext";
 import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,14 +31,18 @@ function PosChange({ pos }: { pos: number }) {
 }
 
 export default function Dashboard() {
+  const { viewingSeason, isCurrentSeason } = useSeason();
   const { data: drivers, isLoading: loadingDrivers } = useQuery<DriverStanding[]>({
-    queryKey: ["/api/standings/drivers"],
+    queryKey: ["/api/standings/drivers", viewingSeason],
+    queryFn: () => fetch(`/api/standings/drivers?season=${viewingSeason}`).then(r => r.json()),
   });
   const { data: owners, isLoading: loadingOwners } = useQuery<OwnerStanding[]>({
-    queryKey: ["/api/standings/owners"],
+    queryKey: ["/api/standings/owners", viewingSeason],
+    queryFn: () => fetch(`/api/standings/owners?season=${viewingSeason}`).then(r => r.json()),
   });
   const { data: races, isLoading: loadingRaces } = useQuery<Race[]>({
-    queryKey: ["/api/races"],
+    queryKey: ["/api/races", viewingSeason],
+    queryFn: () => fetch(`/api/races?season=${viewingSeason}`).then(r => r.json()),
   });
 
   const topDrivers = drivers?.slice(0, 5) ?? [];

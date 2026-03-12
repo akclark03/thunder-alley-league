@@ -188,6 +188,33 @@ function scoreRace(
 
 export async function registerRoutes(httpServer: Server, app: Express): Promise<Server> {
 
+  // Season management
+  app.get("/api/season", async (_req, res) => {
+    const activeSeason = await storage.getActiveSeason();
+    const seasons = await storage.getAllSeasons();
+    res.json({ activeSeason, seasons });
+  });
+
+  app.post("/api/season/new", async (_req, res) => {
+    try {
+      const newSeason = await storage.startNewSeason();
+      res.json({ season: newSeason });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/season/switch", async (req, res) => {
+    try {
+      const { season } = req.body as { season: number };
+      if (typeof season !== "number") return res.status(400).json({ error: "season must be a number" });
+      await storage.setActiveSeason(season);
+      res.json({ season });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Config endpoints
   app.get("/api/config/teams", (_req, res) => {
     const { teamOwners } = loadConfig<{ teamOwners: Record<string, string | null> }>("team_owners.json");
@@ -243,11 +270,12 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
       }>("points_structure.json");
 
       const { results, teamResults } = scoreRace(finishers, grid, pointsStructure);
-      const raceNum = await storage.getNextRaceNum();
+      const activeSeason = await storage.getActiveSeason();
+      const raceNum = await storage.getNextRaceNum(activeSeason);
       const date = new Date().toISOString().slice(0, 10);
 
       const saved = await storage.createRace(
-        insertRaceSchema.parse({ date, raceNum, trackId, results, teamResults })
+        insertRaceSchema.parse({ season: activeSeason, date, raceNum, trackId, results, teamResults })
       );
       res.json(saved);
     } catch (err: any) {
@@ -255,9 +283,10 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     }
   });
 
-  // Get all races
-  app.get("/api/races", async (_req, res) => {
-    const races = await storage.getRaces();
+  // Get all races (optional ?season=N)
+  app.get("/api/races", async (req, res) => {
+    const season = req.query.season ? parseInt(req.query.season as string) : undefined;
+    const races = await storage.getRaces(season);
     res.json(races);
   });
 
@@ -270,29 +299,32 @@ export async function registerRoutes(httpServer: Server, app: Express): Promise<
     res.json(race);
   });
 
-  // Standings endpoints
-  app.get("/api/standings/drivers", async (_req, res) => {
+  // Standings endpoints (all support optional ?season=N)
+  app.get("/api/standings/drivers", async (req, res) => {
     try {
-      const standings = await storage.getDriverStandings();
+      const season = req.query.season ? parseInt(req.query.season as string) : undefined;
+      const standings = await storage.getDriverStandings(season);
       res.json(standings);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  app.get("/api/standings/owners", async (_req, res) => {
+  app.get("/api/standings/owners", async (req, res) => {
     try {
+      const season = req.query.season ? parseInt(req.query.season as string) : undefined;
       const { teamOwners } = loadConfig<{ teamOwners: Record<string, string | null> }>("team_owners.json");
-      const standings = await storage.getOwnerStandings(teamOwners);
+      const standings = await storage.getOwnerStandings(teamOwners, season);
       res.json(standings);
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  app.get("/api/standings/playoffs", async (_req, res) => {
+  app.get("/api/standings/playoffs", async (req, res) => {
     try {
-      const standings = await storage.getPlayoffStandings();
+      const season = req.query.season ? parseInt(req.query.season as string) : undefined;
+      const standings = await storage.getPlayoffStandings(season);
       res.json(standings);
     } catch (err: any) {
       res.status(500).json({ error: err.message });

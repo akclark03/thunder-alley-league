@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useSeason } from "@/contexts/SeasonContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,8 +27,10 @@ function HeadCell({ children, className = "" }: { children: React.ReactNode; cla
 }
 
 export default function PlayoffStandings() {
+  const { viewingSeason } = useSeason();
   const { data: standings, isLoading } = useQuery<PlayoffStanding[]>({
-    queryKey: ["/api/standings/playoffs"],
+    queryKey: ["/api/standings/playoffs", viewingSeason],
+    queryFn: () => fetch(`/api/standings/playoffs?season=${viewingSeason}`).then(r => r.json()),
   });
 
   const cutline = 12;

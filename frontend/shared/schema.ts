@@ -6,6 +6,7 @@ import { z } from "zod";
 
 export const races = pgTable("races", {
   id: serial("id").primaryKey(),
+  season: integer("season").notNull().default(2),
   date: text("date").notNull(),
   raceNum: integer("race_num").notNull(),
   trackId: text("track_id").notNull(),
@@ -13,7 +14,9 @@ export const races = pgTable("races", {
   teamResults: jsonb("team_results").notNull(), // TeamResult[]
 });
 
-export const insertRaceSchema = createInsertSchema(races).omit({ id: true });
+export const insertRaceSchema = createInsertSchema(races).omit({ id: true }).extend({
+  season: z.number().int().positive().default(2),
+});
 export type InsertRace = z.infer<typeof insertRaceSchema>;
 export type Race = typeof races.$inferSelect;
 

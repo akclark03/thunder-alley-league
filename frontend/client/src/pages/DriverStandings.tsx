@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useSeason } from "@/contexts/SeasonContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,8 +34,10 @@ function HeadCell({ children, className = "" }: { children: React.ReactNode; cla
 }
 
 export default function DriverStandings() {
+  const { viewingSeason } = useSeason();
   const { data: standings, isLoading } = useQuery<DriverStanding[]>({
-    queryKey: ["/api/standings/drivers"],
+    queryKey: ["/api/standings/drivers", viewingSeason],
+    queryFn: () => fetch(`/api/standings/drivers?season=${viewingSeason}`).then(r => r.json()),
   });
 
   return (

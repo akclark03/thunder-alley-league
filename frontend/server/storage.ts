@@ -1,4 +1,4 @@
-import type { Race, InsertRace, CarResult, TeamResult } from "@shared/schema";
+import type { Race, InsertRace, CarResult } from "@shared/schema";
 import fs from "fs";
 import path from "path";
 
@@ -43,17 +43,34 @@ export interface PlayoffStanding {
   margin: string;
 }
 
-export interface IStorage {
-  getRaces(): Promise<Race[]>;
-  getRace(id: number): Promise<Race | undefined>;
-  createRace(race: InsertRace): Promise<Race>;
-  getNextRaceNum(): Promise<number>;
-  getDriverStandings(): Promise<DriverStanding[]>;
-  getOwnerStandings(teamOwners: Record<string, string | null>): Promise<OwnerStanding[]>;
-  getPlayoffStandings(): Promise<PlayoffStanding[]>;
+export interface SeasonMeta {
+  season: number;
+  raceCount: number;
+  startDate: string;
+  endDate: string;
+  winner: string | null; // driver name with most points
 }
 
-// ─── Standings computation (mirrors standings.py logic) ───────────────────────
+export interface IStorage {
+  // Season management
+  getActiveSeason(): Promise<number>;
+  setActiveSeason(season: number): Promise<void>;
+  getAllSeasons(): Promise<SeasonMeta[]>;
+  startNewSeason(): Promise<number>;
+
+  // Races
+  getRaces(season?: number): Promise<Race[]>;
+  getRace(id: number): Promise<Race | undefined>;
+  createRace(race: InsertRace): Promise<Race>;
+  getNextRaceNum(season?: number): Promise<number>;
+
+  // Standings (scoped to a season)
+  getDriverStandings(season?: number): Promise<DriverStanding[]>;
+  getOwnerStandings(teamOwners: Record<string, string | null>, season?: number): Promise<OwnerStanding[]>;
+  getPlayoffStandings(season?: number): Promise<PlayoffStanding[]>;
+}
+
+// ─── Standings computation ───────────────────────────────────────────────────
 
 function computeDriverStandings(races: Race[]): DriverStanding[] {
   const driverMap: Record<string, {
@@ -183,17 +200,45 @@ function computePlayoffStandings(races: Race[]): PlayoffStanding[] {
   });
 }
 
-// ─── Storage ──────────────────────────────────────────────────────────────────
+// ─── Persistence paths ───────────────────────────────────────────────────────
 
 const DATA_DIR = path.resolve(process.cwd(), "../thunder-alley-league/data/raw");
+const SEASON_STATE_FILE = path.resolve(process.cwd(), "../thunder-alley-league/data/season_state.json");
+
+// ─── Storage ─────────────────────────────────────────────────────────────────
 
 export class MemStorage implements IStorage {
   private races: Map<number, Race> = new Map();
   private counter = 1;
+  private activeSeason = 2;
 
   constructor() {
+    this._loadSeasonState();
     this._loadExistingRaces();
   }
+
+  // ── Season state persistence ──────────────────────────────────────────────
+
+  private _loadSeasonState() {
+    try {
+      if (fs.existsSync(SEASON_STATE_FILE)) {
+        const raw = fs.readFileSync(SEASON_STATE_FILE, "utf-8");
+        const obj = JSON.parse(raw);
+        if (typeof obj.activeSeason === "number") {
+          this.activeSeason = obj.activeSeason;
+        }
+      }
+    } catch {}
+  }
+
+  private _persistSeasonState() {
+    try {
+      fs.mkdirSync(path.dirname(SEASON_STATE_FILE), { recursive: true });
+      fs.writeFileSync(SEASON_STATE_FILE, JSON.stringify({ activeSeason: this.activeSeason }, null, 2));
+    } catch {}
+  }
+
+  // ── Race file loading ─────────────────────────────────────────────────────
 
   private _loadExistingRaces() {
     if (!fs.existsSync(DATA_DIR)) return;
@@ -206,6 +251,7 @@ export class MemStorage implements IStorage {
         const obj = JSON.parse(raw);
         const race: Race = {
           id: this.counter++,
+          season: obj.season ?? 2, // backfill: existing races without season field → season 2
           date: obj.date,
           raceNum: obj.raceNum,
           trackId: obj.trackId,
@@ -213,24 +259,12 @@ export class MemStorage implements IStorage {
           teamResults: obj.teamResults ?? [],
         };
         this.races.set(race.id, race);
+        // Backfill season field in the file if missing
+        if (obj.season === undefined) {
+          this._persistRace(race);
+        }
       } catch {}
     }
-  }
-
-  async getRaces(): Promise<Race[]> {
-    return Array.from(this.races.values()).sort((a, b) => a.raceNum - b.raceNum);
-  }
-
-  async getRace(id: number): Promise<Race | undefined> {
-    return this.races.get(id);
-  }
-
-  async createRace(data: InsertRace): Promise<Race> {
-    const race: Race = { ...data, id: this.counter++ };
-    this.races.set(race.id, race);
-    // Persist to disk
-    this._persistRace(race);
-    return race;
   }
 
   private _persistRace(race: Race) {
@@ -239,29 +273,109 @@ export class MemStorage implements IStorage {
       const fname = `race_${race.date}_r${race.raceNum}.json`;
       fs.writeFileSync(
         path.join(DATA_DIR, fname),
-        JSON.stringify({ date: race.date, raceNum: race.raceNum, trackId: race.trackId, results: race.results, teamResults: race.teamResults }, null, 2)
+        JSON.stringify({
+          season: race.season,
+          date: race.date,
+          raceNum: race.raceNum,
+          trackId: race.trackId,
+          results: race.results,
+          teamResults: race.teamResults,
+        }, null, 2)
       );
     } catch {}
   }
 
-  async getNextRaceNum(): Promise<number> {
-    const races = await this.getRaces();
+  // ── Season management ─────────────────────────────────────────────────────
+
+  async getActiveSeason(): Promise<number> {
+    return this.activeSeason;
+  }
+
+  async setActiveSeason(season: number): Promise<void> {
+    this.activeSeason = season;
+    this._persistSeasonState();
+  }
+
+  async getAllSeasons(): Promise<SeasonMeta[]> {
+    const allRaces = Array.from(this.races.values());
+    const bySeasonMap = new Map<number, Race[]>();
+
+    for (const r of allRaces) {
+      const s = r.season ?? 2;
+      if (!bySeasonMap.has(s)) bySeasonMap.set(s, []);
+      bySeasonMap.get(s)!.push(r);
+    }
+
+    // Always include activeSeason even if it has no races yet
+    if (!bySeasonMap.has(this.activeSeason)) {
+      bySeasonMap.set(this.activeSeason, []);
+    }
+
+    const seasons: SeasonMeta[] = [];
+    for (const [season, races] of bySeasonMap) {
+      const sorted = races.sort((a, b) => a.raceNum - b.raceNum);
+      const standings = computeDriverStandings(races);
+      seasons.push({
+        season,
+        raceCount: races.length,
+        startDate: sorted[0]?.date ?? "",
+        endDate: sorted[sorted.length - 1]?.date ?? "",
+        winner: standings[0]?.driver ?? null,
+      });
+    }
+
+    return seasons.sort((a, b) => a.season - b.season);
+  }
+
+  async startNewSeason(): Promise<number> {
+    const allSeasons = await this.getAllSeasons();
+    const maxSeason = allSeasons.reduce((m, s) => Math.max(m, s.season), 1);
+    const newSeason = maxSeason + 1;
+    this.activeSeason = newSeason;
+    this._persistSeasonState();
+    return newSeason;
+  }
+
+  // ── Races ─────────────────────────────────────────────────────────────────
+
+  async getRaces(season?: number): Promise<Race[]> {
+    const targetSeason = season ?? this.activeSeason;
+    return Array.from(this.races.values())
+      .filter((r) => (r.season ?? 2) === targetSeason)
+      .sort((a, b) => a.raceNum - b.raceNum);
+  }
+
+  async getRace(id: number): Promise<Race | undefined> {
+    return this.races.get(id);
+  }
+
+  async createRace(data: InsertRace): Promise<Race> {
+    const race: Race = { ...data, season: data.season ?? this.activeSeason, id: this.counter++ };
+    this.races.set(race.id, race);
+    this._persistRace(race);
+    return race;
+  }
+
+  async getNextRaceNum(season?: number): Promise<number> {
+    const races = await this.getRaces(season);
     if (races.length === 0) return 1;
     return Math.max(...races.map((r) => r.raceNum)) + 1;
   }
 
-  async getDriverStandings(): Promise<DriverStanding[]> {
-    const races = await this.getRaces();
+  // ── Standings ─────────────────────────────────────────────────────────────
+
+  async getDriverStandings(season?: number): Promise<DriverStanding[]> {
+    const races = await this.getRaces(season);
     return computeDriverStandings(races);
   }
 
-  async getOwnerStandings(teamOwners: Record<string, string | null>): Promise<OwnerStanding[]> {
-    const races = await this.getRaces();
+  async getOwnerStandings(teamOwners: Record<string, string | null>, season?: number): Promise<OwnerStanding[]> {
+    const races = await this.getRaces(season);
     return computeOwnerStandings(races, teamOwners);
   }
 
-  async getPlayoffStandings(): Promise<PlayoffStanding[]> {
-    const races = await this.getRaces();
+  async getPlayoffStandings(season?: number): Promise<PlayoffStanding[]> {
+    const races = await this.getRaces(season);
     return computePlayoffStandings(races);
   }
 }
