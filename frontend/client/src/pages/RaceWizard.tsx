@@ -275,72 +275,92 @@ function StepResults({
   const allFilled = entries.every((e) => e.finish > 0);
   const hasDuplicates = new Set(usedFinishes).size !== usedFinishes.length;
 
+  // Group grid rows by team, preserving starting-position order within each team
+  const teamGroups: { team: string; rows: GridRow[] }[] = [];
+  for (const row of grid) {
+    const group = teamGroups.find((g) => g.team === row.team);
+    if (group) {
+      group.rows.push(row);
+    } else {
+      teamGroups.push({ team: row.team, rows: [row] });
+    }
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-muted-foreground text-sm">
-        Enter the finishing position and turns led for each car.
+        Enter finishing position and turns led — grouped by team.
       </p>
       {hasDuplicates && (
         <div className="text-destructive text-xs bg-destructive/10 rounded-lg px-3 py-2" data-testid="error-duplicate-positions">
           Duplicate finishing positions — each car must have a unique finish.
         </div>
       )}
-      <div className="rounded-lg border border-border overflow-hidden" data-testid="results-table">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground w-12">#</th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground">Driver</th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground w-24">Finish</th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground w-24">Turns Led</th>
-            </tr>
-          </thead>
-          <tbody>
-            {grid.map((row, i) => {
-              const entry = entries.find((e) => e.carNumber === row.carNumber);
-              const isDuplicate =
-                entry && entry.finish > 0 && usedFinishes.filter((f) => f === entry.finish).length > 1;
-              return (
-                <tr key={row.carNumber} className={`border-t border-border ${i % 2 === 0 ? "" : "bg-muted/20"}`}>
-                  <td className="px-3 py-2 font-mono font-bold text-primary">{row.carNumber}</td>
-                  <td className="px-3 py-2">
-                    <div>
-                      <div className="font-medium">{row.driver}</div>
-                      <div className="text-xs text-muted-foreground flex items-center gap-1">
-                        <div className={`w-1.5 h-1.5 rounded-full ${teamColor(row.team)}`} />
-                        {row.team}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-3 py-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={grid.length}
-                      data-testid={`input-finish-${row.carNumber}`}
-                      value={entry?.finish || ""}
-                      onChange={(e) => setFinish(row.carNumber, parseInt(e.target.value) || 0)}
-                      className={`w-16 h-8 text-center font-mono ${isDuplicate ? "border-destructive focus-visible:ring-destructive" : ""}`}
-                      placeholder={String(i + 1)}
-                    />
-                  </td>
-                  <td className="px-3 py-2">
-                    <Input
-                      type="number"
-                      min={0}
-                      data-testid={`input-turns-${row.carNumber}`}
-                      value={entry?.turnsLed ?? ""}
-                      onChange={(e) => setTurnsLed(row.carNumber, parseInt(e.target.value) || 0)}
-                      className="w-16 h-8 text-center font-mono"
-                      placeholder="0"
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+
+      <div className="space-y-3" data-testid="results-table">
+        {teamGroups.map(({ team, rows }) => {
+          const teamDot = teamColor(team);
+          return (
+            <div key={team} className="rounded-lg border border-border overflow-hidden">
+              {/* Team header */}
+              <div className={`flex items-center gap-2 px-3 py-2 bg-muted/50 border-b border-border`}>
+                <div className={`w-3 h-3 rounded-full flex-shrink-0 ${teamDot}`} />
+                <span className="font-semibold text-sm">{team}</span>
+              </div>
+              {/* Drivers */}
+              <table className="w-full text-sm">
+                <thead className="bg-muted/20">
+                  <tr>
+                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground w-10 text-xs">Start</th>
+                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground w-10 text-xs">#</th>
+                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground text-xs">Driver</th>
+                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground w-20 text-xs">Finish</th>
+                    <th className="px-3 py-1.5 text-left font-medium text-muted-foreground w-20 text-xs">Turns Led</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row, i) => {
+                    const entry = entries.find((e) => e.carNumber === row.carNumber);
+                    const isDuplicate =
+                      entry && entry.finish > 0 && usedFinishes.filter((f) => f === entry.finish).length > 1;
+                    return (
+                      <tr key={row.carNumber} className={`border-t border-border ${i % 2 === 0 ? "" : "bg-muted/10"}`}>
+                        <td className="px-3 py-2 font-mono text-muted-foreground text-xs">{row.startingPosition}</td>
+                        <td className="px-3 py-2 font-mono font-bold text-primary">{row.carNumber}</td>
+                        <td className="px-3 py-2 font-medium">{row.driver}</td>
+                        <td className="px-3 py-2">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={grid.length}
+                            data-testid={`input-finish-${row.carNumber}`}
+                            value={entry?.finish || ""}
+                            onChange={(e) => setFinish(row.carNumber, parseInt(e.target.value) || 0)}
+                            className={`w-16 h-8 text-center font-mono ${isDuplicate ? "border-destructive focus-visible:ring-destructive" : ""}`}
+                            placeholder="—"
+                          />
+                        </td>
+                        <td className="px-3 py-2">
+                          <Input
+                            type="number"
+                            min={0}
+                            data-testid={`input-turns-${row.carNumber}`}
+                            value={entry?.turnsLed ?? ""}
+                            onChange={(e) => setTurnsLed(row.carNumber, parseInt(e.target.value) || 0)}
+                            className="w-16 h-8 text-center font-mono"
+                            placeholder="0"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
       </div>
+
       {allFilled && !hasDuplicates && (
         <div className="text-xs text-primary bg-primary/10 rounded-lg px-3 py-2 flex items-center gap-2">
           <Check className="w-3.5 h-3.5" />
