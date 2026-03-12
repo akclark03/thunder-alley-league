@@ -2,7 +2,7 @@
   "drivers": {
     "1": {
       "carNumber": 1,
-      "driver": "François Petitclerc",
+      "driver": "Fran\u00e7ois Petitclerc",
       "team": "Pockets Racing"
     },
     "3": {
@@ -22,7 +22,7 @@
     },
     "8": {
       "carNumber": 8,
-      "driver": "Francis K. Lalumière",
+      "driver": "Francis K. Lalumi\u00e8re",
       "team": "Howitzer Racing"
     },
     "9": {
@@ -138,6 +138,46 @@
     "88": {
       "carNumber": 88,
       "driver": "Aiden Thayler",
+      "team": "Mythos Motorsports"
+    },
+    "100": {
+      "carNumber": 100,
+      "driver": "Driver 100",
+      "team": "Oracle Oil Racing Team"
+    },
+    "101": {
+      "carNumber": 101,
+      "driver": "Driver 101",
+      "team": "Oracle Oil Racing Team"
+    },
+    "102": {
+      "carNumber": 102,
+      "driver": "Driver 102",
+      "team": "Oracle Oil Racing Team"
+    },
+    "103": {
+      "carNumber": 103,
+      "driver": "Driver 103",
+      "team": "Oracle Oil Racing Team"
+    },
+    "104": {
+      "carNumber": 104,
+      "driver": "Driver 104",
+      "team": "Oracle Oil Racing Team"
+    },
+    "105": {
+      "carNumber": 105,
+      "driver": "Driver 105",
+      "team": "Oracle Oil Racing Team"
+    },
+    "106": {
+      "carNumber": 106,
+      "driver": "Driver 106",
+      "team": "Mythos Motorsports"
+    },
+    "107": {
+      "carNumber": 107,
+      "driver": "Driver 107",
       "team": "Mythos Motorsports"
     }
   }
