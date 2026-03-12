@@ -8,13 +8,9 @@ import pandas as pd
 def calc_qualifying_points(
     finish: int, starting_pos: int, points_structure: dict
 ) -> int:
-    """Calculate qualifying points from structure plus pole position bonus."""
+    """Calculate qualifying points based on finish position."""
     qual_def = points_structure.get("qualifyingPoints", {}) or {}
     points = int(qual_def.get(str(finish), 0))
-
-    if starting_pos == 1:
-        points += 4
-
     return points
 
 
